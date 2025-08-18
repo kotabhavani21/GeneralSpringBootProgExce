@@ -1,0 +1,106 @@
+name: CI Maven project with Multi-Staging
+ 
+on:
+
+  workflow_dispatch:
+
+    inputs:
+
+      Target_Environment:
+
+        type: environment
+
+        default: dev
+ 
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.Target_Environment }}
+
+    steps:
+
+      - name: Checkout
+
+        uses: actions/checkout@v4.2.2
+ 
+      - name: Setup Java JDK
+
+        uses: actions/setup-java@v3.14.1
+
+        with:
+
+          java-version: 17
+
+          distribution: microsoft
+ 
+      - name: Build using Maven
+
+        run: mvn --batch-mode --update-snapshots verify
+ 
+      - name: Prepare Artifact
+
+        run: mkdir staging && cp target/*.jar staging
+ 
+      - name: Upload Build Artifact
+
+        uses: actions/upload-artifact@v4.6.2
+
+        with:
+
+          name: Package
+
+          path: staging
+ 
+  test:
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.Target_Environment }}
+
+    steps:
+
+      - name: Download Build Artifact
+
+        uses: actions/download-artifact@v4.1.7
+
+        with:
+
+          name: Package
+
+          path: staging
+ 
+      - name: Run Tests
+
+        run: echo "Running tests on ${{ inputs.Target_Environment }} environment"
+ 
+  deploy:
+
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.Target_Environment }}
+
+    if: ${{ inputs.Target_Environment != 'dev' }}
+
+    steps:
+
+      - name: Download Build Artifact
+
+        uses: actions/download-artifact@v4.1.7
+
+        with:
+
+          name: Package
+
+          path: staging
+ 
+      - name: Deploy
+
+        run: echo "Deploying to ${{ inputs.Target_Environment }} environment"
+ 
