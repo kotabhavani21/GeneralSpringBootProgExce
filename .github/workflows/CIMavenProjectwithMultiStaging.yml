@@ -84,10 +84,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    environment: ${{ inputs.Target_Environment }}
-
-    if: ${{ inputs.Target_Environment != 'dev' }}
-
+ 
     steps:
 
       - name: Download Build Artifact
